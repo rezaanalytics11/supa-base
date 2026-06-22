@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Tahoma; }
+        body { background: #f0f4f8; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; }
+        h1 { color: #0288d1; margin-bottom: 20px; font-size: 22px; }
+        .status { padding: 15px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
+        .ok { background: #e8f5e9; color: #2e7d32; border: 2px solid #4CAF50; }
+        .err { background: #ffebee; color: #c62828; border: 2px solid #f44336; }
+        .info { background: #e3f2fd; color: #1565c0; border: 2px solid #2196F3; }
+        button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-family: Tahoma; font-weight: bold; }
+        .btn-test { background: #0288d1; color: white; }
+        .btn-write { background: #4CAF50; color: white; }
+        .btn-read { background: #FF9800; color: white; }
+        .result { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 13px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست اتصال به Supabase</h1>
+        
+        <div id="status" class="status info">🔄 در حال بررسی...</div>
+        
+        <button class="btn-test" onclick="testConnection()">۱. تست اتصال</button>
+        <button class="btn-write" onclick="testWrite()">۲. تست نوشتن</button>
+        <button class="btn-read" onclick="testRead()">۳. تست خواندن</button>
+        
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://bwfoavybnifyrjcpzuva.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3Zm9hdnlibmlmeXJqY3B6dXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjcyNzUsImV4cCI6MjA5NzY0MzI3NX0.mzFnsXpH3UuO3aVaXFC0AYf-Y1El9vrogoeqeG8aIqc';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.className = 'status ' + type;
+            el.innerText = msg;
+        }
+
+        function showResult(data) {
+            const el = document.getElementById('result');
+            el.style.display = 'block';
+            el.innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function testConnection() {
+            showStatus('⏳ در حال اتصال...', 'info');
+            try {
+                const { data, error } = await supabase.from('workouts').select('count', { count: 'exact', head: true });
+                if (error) {
+                    showStatus('❌ خطا: ' + error.message, 'err');
+                    showResult(error);
+                } else {
+                    showStatus('✅ اتصال برقرار شد!', 'ok');
+                    showResult({ message: 'Supabase is working!', data: data });
+                }
+            } catch (e) {
+                showStatus('❌ خطای غیرمنتظره: ' + e.message, 'err');
+            }
+        }
+
+        async function testWrite() {
+            showStatus('⏳ در حال نوشتن داده تستی...', 'info');
+            try {
+                const testData = {
+                    date: '1403/01/01',
+                    duration: 20,
+                    resistance: 3,
+                    pain: 2,
+                    notes: 'تست از برنامه ساده',
+                    calories: 100,
+                    weight: 65
+                };
+                
+                const { data, error } = await supabase.from('workouts').insert([testData]).select();
+                
+                if (error) {
+                    showStatus('❌ خطا در نوشتن: ' + error.message, 'err');
+                    showResult(error);
+                } else {
+                    showStatus('✅ داده با موفقیت نوشته شد!', 'ok');
+                    showResult(data);
+                }
+            } catch (e) {
+                showStatus('❌ خطا: ' + e.message, 'err');
+            }
+        }
+
+        async function testRead() {
+            showStatus('⏳ در حال خواندن داده‌ها...', 'info');
+            try {
+                const { data, error } = await supabase.from('workouts').select('*').limit(5);
+                
+                if (error) {
+                    showStatus('❌ خطا در خواندن: ' + error.message, 'err');
+                    showResult(error);
+                } else {
+                    const count = data ? data.length : 0;
+                    showStatus(`✅ ${count} رکورد خوانده شد!`, 'ok');
+                    showResult(data);
+                }
+            } catch (e) {
+                showStatus('❌ خطا: ' + e.message, 'err');
+            }
+        }
+    </script>
+</body>
+</html>
+
